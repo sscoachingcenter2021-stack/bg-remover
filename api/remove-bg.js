@@ -1,38 +1,33 @@
-import fetch from 'node-fetch';
-
+// api/remove-bg.js
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
-
-  // Add CORS headers to allow cross-origin requests
-  res.setHeader('Access-Control-Allow-Origin', '*');  // Allow all origins (you can restrict this to specific domains)
-  res.setHeader('Access-Control-Allow-Methods', 'POST'); // Allow only POST method
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Api-Key'); // Allow these headers
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
   try {
-    const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
-    const bodyBuffer = Buffer.concat(chunks);
+    // Convert incoming request body to form data for remove.bg
+    const formData = new FormData();
+    const blob = await req.arrayBuffer();
+    formData.append('image_file', new Blob([blob]), 'image.png');
+    formData.append('size', 'auto');
 
-    const apiKey = process.env.REMOVE_BG_KEY; // Your Remove.bg API key
-    const r = await fetch('https://api.remove.bg/v1.0/removebg', {
+    // Call the remove.bg API
+    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
       method: 'POST',
-      headers: {
-        'X-Api-Key': apiKey,
-        'Content-Type': req.headers['content-type'] || 'multipart/form-data'
-      },
-      body: bodyBuffer
+      headers: { 'X-Api-Key': process.env.REMOVEBG_API_KEY },
+      body: formData,
     });
 
-    if (!r.ok) {
-      const text = await r.text();
-      return res.status(r.status).send(text);
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).send(errText);
     }
 
-    const imgBuffer = await r.arrayBuffer();
+    // Return the background-removed image
+    const arrayBuffer = await response.arrayBuffer();
     res.setHeader('Content-Type', 'image/png');
-    res.send(Buffer.from(imgBuffer));
+    res.send(Buffer.from(arrayBuffer));
   } catch (err) {
-    console.error(err);
-    res.status(500).send('Server error: ' + err.message);
+    res.status(500).json({ error: err.message });
   }
 }

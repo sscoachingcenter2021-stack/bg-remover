@@ -9,6 +9,7 @@
       font-family: sans-serif;
       background: #f5f6fa;
       padding: 40px;
+      text-align: center;
     }
     .card {
       max-width: 720px;
@@ -16,8 +17,7 @@
       background: #fff;
       padding: 24px;
       border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
-      text-align: center;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
     }
     img {
       max-width: 100%;
@@ -60,7 +60,7 @@
     startBtn.addEventListener('click', async () => {
       const f = fileEl.files[0];
       if (!f) return alert('Please select an image first.');
-      
+
       orig.src = URL.createObjectURL(f);
       orig.style.display = 'block';
       out.style.display = 'none';
@@ -72,7 +72,7 @@
       form.append('size', 'auto');
 
       try {
-        const res = await fetch('https://bg-remover-sepia.vercel.app/', {
+        const res = await fetch('/api/remove-bg', {
           method: 'POST',
           body: form
         });
