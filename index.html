@@ -5,62 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Background Remover</title>
   <style>
-    body { font-family: sans-serif; background: #f5f6fa; padding: 40px; text-align:center; }
-    .card { max-width: 720px; margin: 0 auto; background: #fff; padding: 24px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.06); }
-    img { max-width: 100%; margin-top:12px; border-radius:8px; display:none; }
-    button { padding:10px 20px; background:#007bff; color:white; border:none; border-radius:8px; cursor:pointer; }
-    button:disabled { background:#ccc; cursor:not-allowed; }
+    body {
+      font-family: sans-serif;
+      background: #f5f6fa;
+      padding: 40px;
+      text-align: center;
+    }
+    .card {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    }
+    img {
+      max-width: 100%;
+      margin-top: 12px;
+      border-radius: 8px;
+      display: none;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <div class="card">
     <h2>Remove Background</h2>
-    <label for="file">Choose an image:</label><br><br>
     <input id="file" type="file" accept="image/*"><br><br>
     <button id="start">Remove</button>
     <p id="status"></p>
     <img id="orig" alt="Original Image">
-    <img id="out" alt="Background Removed">
+    <img id="out" alt="Output Image">
   </div>
 
-<script>
-const startBtn = document.getElementById("start");
-const fileEl = document.getElementById("file");
-const status = document.getElementById("status");
-const orig = document.getElementById("orig");
-const out = document.getElementById("out");
+  <script>
+    const startBtn = document.getElementById("start");
+    const fileEl = document.getElementById("file");
+    const status = document.getElementById("status");
+    const orig = document.getElementById("orig");
+    const out = document.getElementById("out");
 
-startBtn.addEventListener("click", async () => {
-  const f = fileEl.files[0];
-  if (!f) return alert("Please select an image first");
+    startBtn.addEventListener("click", async () => {
+      const file = fileEl.files[0];
+      if (!file) return alert("Please select an image first.");
 
-  orig.src = URL.createObjectURL(f);
-  orig.style.display = "block";
-  out.style.display = "none";
-  status.textContent = "Processing...";
-  startBtn.disabled = true;
+      orig.src = URL.createObjectURL(file);
+      orig.style.display = "block";
+      out.style.display = "none";
+      status.textContent = "Processing...";
+      startBtn.disabled = true;
 
-  const form = new FormData();
-  form.append("image_file", f);
+      const form = new FormData();
+      form.append("image_file", file);
 
-  try {
-    const res = await fetch("/api/remove-bg", {
-      method: "POST",
-      body: form
+      try {
+        const res = await fetch("/api/remove-bg", {
+          method: "POST",
+          body: form,
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const blob = await res.blob();
+        out.src = URL.createObjectURL(blob);
+        out.style.display = "block";
+        status.textContent = "Done ✅";
+      } catch (err) {
+        status.textContent = "Error: " + err.message;
+      } finally {
+        startBtn.disabled = false;
+      }
     });
-
-    if (!res.ok) throw new Error(await res.text());
-
-    const blob = await res.blob();
-    out.src = URL.createObjectURL(blob);
-    out.style.display = "block";
-    status.textContent = "Done ✅";
-  } catch (err) {
-    status.textContent = "Error: " + err.message;
-  } finally {
-    startBtn.disabled = false;
-  }
-});
-</script>
+  </script>
 </body>
 </html>

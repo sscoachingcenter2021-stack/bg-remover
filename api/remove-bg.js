@@ -3,32 +3,30 @@ import fs from "fs";
 import FormData from "form-data";
 
 export const config = {
-  api: { bodyParser: false }, // Important for file uploads
+  api: { bodyParser: false }, // let formidable handle file uploads
 };
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
+  if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
-  }
 
-  const form = formidable({ keepExtensions: true });
+  const form = new formidable.IncomingForm({ keepExtensions: true });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: "Form parsing failed" });
+    if (err) return res.status(500).json({ error: err.message });
 
-    // Get uploaded file
-    const file = files.image_file;
-    if (!file) return res.status(400).json({ error: "No image uploaded" });
+    const file = Array.isArray(files.image_file)
+      ? files.image_file[0]
+      : files.image_file;
 
-    const filePath = Array.isArray(file) ? file[0].filepath : file.filepath;
-    if (!filePath) return res.status(400).json({ error: "File path missing" });
+    if (!file || !file.filepath)
+      return res.status(400).json({ error: "No image uploaded" });
 
     try {
-      const buffer = fs.readFileSync(filePath);
+      const buffer = fs.readFileSync(file.filepath);
 
-      // Create form-data for Remove.bg API
       const fd = new FormData();
-      fd.append("image_file", buffer, { filename: "image.png" });
+      fd.append("image_file", buffer, { filename: file.originalFilename });
       fd.append("size", "auto");
 
       const r = await fetch("https://api.remove.bg/v1.0/removebg", {
