@@ -49,45 +49,51 @@
     <img id="orig" alt="Original Image">
     <img id="out" alt="Output Image">
   </div>
-
   <script>
-    const startBtn = document.getElementById("start");
-    const fileEl = document.getElementById("file");
-    const status = document.getElementById("status");
-    const orig = document.getElementById("orig");
-    const out = document.getElementById("out");
+const startBtn = document.getElementById("start");
+const fileEl = document.getElementById("file");
+const status = document.getElementById("status");
+const orig = document.getElementById("orig");
+const out = document.getElementById("out");
 
-    startBtn.addEventListener("click", async () => {
-      const file = fileEl.files[0];
-      if (!file) return alert("Please select an image first.");
+startBtn.addEventListener("click", async () => {
+  const file = fileEl.files[0];
+  if (!file) {
+    alert("Please select an image first.");
+    console.log("No file selected in frontend");
+    return;
+  }
 
-      orig.src = URL.createObjectURL(file);
-      orig.style.display = "block";
-      out.style.display = "none";
-      status.textContent = "Processing...";
-      startBtn.disabled = true;
+  console.log("File selected:", file.name, file.size, file.type);
 
-      const form = new FormData();
-      form.append("image_file", file);
+  orig.src = URL.createObjectURL(file);
+  orig.style.display = "block";
+  out.style.display = "none";
+  status.textContent = "Processing...";
+  startBtn.disabled = true;
 
-      try {
-        const res = await fetch("/api/remove-bg", {
-          method: "POST",
-          body: form,
-        });
+  const form = new FormData();
+  form.append("image_file", file);
 
-        if (!res.ok) throw new Error(await res.text());
+  try {
+    const res = await fetch("/api/remove-bg", { method: "POST", body: form });
+    console.log("Fetch request sent");
 
-        const blob = await res.blob();
-        out.src = URL.createObjectURL(blob);
-        out.style.display = "block";
-        status.textContent = "Done ✅";
-      } catch (err) {
-        status.textContent = "Error: " + err.message;
-      } finally {
-        startBtn.disabled = false;
-      }
-    });
-  </script>
+    if (!res.ok) throw new Error(await res.text());
+
+    const blob = await res.blob();
+    console.log("Blob received, size:", blob.size);
+
+    out.src = URL.createObjectURL(blob);
+    out.style.display = "block";
+    status.textContent = "Done ✅";
+  } catch (err) {
+    console.error("Frontend error:", err);
+    status.textContent = "Error: " + err.message;
+  } finally {
+    startBtn.disabled = false;
+  }
+});
+</script>  
 </body>
 </html>
