@@ -61,27 +61,36 @@
       const f = fileEl.files[0];
       if (!f) return alert('Please select an image first.');
 
+      // Show original image
       orig.src = URL.createObjectURL(f);
       orig.style.display = 'block';
       out.style.display = 'none';
       status.textContent = 'Processing...';
       startBtn.disabled = true;
 
-      const form = new FormData();
-      form.append('image_file', f);
-      form.append('size', 'auto');
-
       try {
+        // Create browser FormData (native)
+        const form = new FormData();
+        form.append('image_file', f);
+        form.append('size', 'auto');
+
+        // Send to your own Vercel API route
         const res = await fetch('/api/remove-bg', {
           method: 'POST',
           body: form
         });
-        if (!res.ok) throw new Error(await res.text());
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Failed to process image.');
+        }
+
         const blob = await res.blob();
         out.src = URL.createObjectURL(blob);
         out.style.display = 'block';
         status.textContent = 'Done ✅';
       } catch (err) {
+        console.error(err);
         status.textContent = 'Error: ' + err.message;
       } finally {
         startBtn.disabled = false;
