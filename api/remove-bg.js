@@ -1,20 +1,40 @@
 // api/remove-bg.js
+
+import formidable from "formidable";
+import fs from "fs";
+
+export const config = {
+  api: {
+    bodyParser: false, // important — we'll handle file parsing ourselves
+  },
+};
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    // Convert incoming request body to form data for remove.bg
-    const formData = new FormData();
-    const blob = await req.arrayBuffer();
-    formData.append('image_file', new Blob([blob]), 'image.png');
-    formData.append('size', 'auto');
+    // Parse multipart form data (image file)
+    const form = formidable({});
+    const [fields, files] = await form.parse(req);
 
-    // Call the remove.bg API
-    const response = await fetch('https://api.remove.bg/v1.0/removebg', {
-      method: 'POST',
-      headers: { 'X-Api-Key': process.env.REMOVEBG_API_KEY },
+    const file = files.image_file?.[0];
+    if (!file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const fileStream = fs.createReadStream(file.filepath);
+    const formData = new FormData();
+    formData.append("image_file", fileStream, file.originalFilename || "image.png");
+    formData.append("size", "auto");
+
+    // Call remove.bg API
+    const response = await fetch("https://api.remove.bg/v1.0/removebg", {
+      method: "POST",
+      headers: {
+        "X-Api-Key": process.env.REMOVEBG_API_KEY,
+      },
       body: formData,
     });
 
@@ -23,11 +43,11 @@ export default async function handler(req, res) {
       return res.status(response.status).send(errText);
     }
 
-    // Return the background-removed image
     const arrayBuffer = await response.arrayBuffer();
-    res.setHeader('Content-Type', 'image/png');
+    res.setHeader("Content-Type", "image/png");
     res.send(Buffer.from(arrayBuffer));
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 }
