@@ -18,15 +18,22 @@ export default async function handler(req, res) {
 
   try {
     const { files } = await parseForm(req);
+    console.log("FILES:", files);
 
     // Get uploaded file
     const fileObj = files.image_file;
-    const filePath = Array.isArray(fileObj) ? fileObj[0].filepath : fileObj?.filepath;
+let filePath;
+
+if (Array.isArray(fileObj)) filePath = fileObj[0]?.filepath;
+else if (fileObj) filePath = fileObj.filepath;
+
+if (!filePath) return res.status(400).json({ error: "No image uploaded" });
 
     if (!filePath) return res.status(400).json({ error: "No image uploaded" });
 
     // Read file as Buffer
-    const buffer = fs.readFileSync(filePath);
+const buffer = fs.readFileSync(filePath);
+fd.append("image_file_b64", buffer.toString("base64"));
 
     // Send to remove.bg
     const fd = new FormData();
