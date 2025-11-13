@@ -3,10 +3,25 @@ import FormData from "form-data";
 
 export const config = { api: { bodyParser: false } };
 
-// Utility to parse form as promise
 const parseForm = (req) =>
   new Promise((resolve, reject) => {
-    const form = formidable({ keepExtensions: true });
+    const form = formidable({
+      keepExtensions: true,
+      fileWriteStreamHandler: () => {
+        // Write to memory instead of disk
+        const chunks = [];
+        return new (class extends require("stream").Writable {
+          _write(chunk, encoding, callback) {
+            chunks.push(chunk);
+            callback();
+          }
+          get buffer() {
+            return Buffer.concat(chunks);
+          }
+        })();
+      },
+    });
+
     form.parse(req, (err, fields, files) => {
       if (err) reject(err);
       else resolve({ fields, files });
@@ -17,7 +32,6 @@ export default async function handler(req, res) {
   console.log("API invoked");
 
   if (req.method !== "POST") {
-    console.log("Method not allowed:", req.method);
     return res.status(405).json({ error: "Method not allowed" });
   }
 
@@ -26,13 +40,9 @@ export default async function handler(req, res) {
     console.log("Files received:", files);
 
     const file = Array.isArray(files.image_file) ? files.image_file[0] : files.image_file;
-    if (!file) {
-      console.log("No file uploaded");
-      return res.status(400).json({ error: "No image uploaded" });
-    }
+    if (!file) return res.status(400).json({ error: "No image uploaded" });
 
-    // Use the file buffer from formidable directly
-    const buffer = file?.filepath ? Buffer.from(await fs.promises.readFile(file.filepath)) : null;
+    const buffer = file._writeStream?.buffer || file._data || file.filepath; // get buffer from memory
     if (!buffer) {
       console.log("Buffer is empty");
       return res.status(500).json({ error: "Failed to read uploaded file" });
@@ -40,7 +50,6 @@ export default async function handler(req, res) {
 
     console.log("Buffer size:", buffer.length);
 
-    // Prepare FormData for remove.bg
     const fd = new FormData();
     fd.append("image_file", buffer, { filename: file.originalFilename || "image.png" });
     fd.append("size", "auto");
