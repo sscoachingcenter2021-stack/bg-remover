@@ -3,9 +3,7 @@ import fs from "fs";
 import FormData from "form-data";
 
 export const config = {
-  api: {
-    bodyParser: false,
-  },
+  api: { bodyParser: false }, // Important for file uploads
 };
 
 export default async function handler(req, res) {
@@ -13,29 +11,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Parse multipart form
   const form = formidable({ keepExtensions: true });
 
   form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: "Form parsing error" });
-    }
+    if (err) return res.status(500).json({ error: "Form parsing failed" });
 
+    // Get uploaded file
     const file = files.image_file;
-    if (!file) {
-      return res.status(400).json({ error: "No image uploaded" });
-    }
+    if (!file) return res.status(400).json({ error: "No image uploaded" });
 
-    // Get path safely
     const filePath = Array.isArray(file) ? file[0].filepath : file.filepath;
-
-    if (!filePath) return res.status(400).json({ error: "No image uploaded" });
+    if (!filePath) return res.status(400).json({ error: "File path missing" });
 
     try {
       const buffer = fs.readFileSync(filePath);
 
-      // Prepare FormData for remove.bg
+      // Create form-data for Remove.bg API
       const fd = new FormData();
       fd.append("image_file", buffer, { filename: "image.png" });
       fd.append("size", "auto");
@@ -57,9 +48,9 @@ export default async function handler(req, res) {
       const resultBuffer = Buffer.from(await r.arrayBuffer());
       res.setHeader("Content-Type", "image/png");
       res.send(resultBuffer);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: err.message });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
     }
   });
 }
