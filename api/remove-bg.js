@@ -18,16 +18,19 @@ export default async function handler(req, res) {
 
   try {
     const { files } = await parseForm(req);
+
+    // Get uploaded file
     const fileObj = files.image_file;
     const filePath = Array.isArray(fileObj) ? fileObj[0].filepath : fileObj?.filepath;
 
     if (!filePath) return res.status(400).json({ error: "No image uploaded" });
 
-    // Read file into buffer
+    // Read file as Buffer
     const buffer = fs.readFileSync(filePath);
 
+    // Send to remove.bg
     const fd = new FormData();
-    fd.append("image_file", buffer, { filename: "image.png" }); // filename is required
+    fd.append("image_file", buffer, { filename: "image.png" });
     fd.append("size", "auto");
 
     const r = await fetch("https://api.remove.bg/v1.0/removebg", {
