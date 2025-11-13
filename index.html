@@ -1,0 +1,55 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Background Remover</title>
+  <style>
+    body{font-family:sans-serif;background:#f5f6fa;padding:40px}
+    .card{max-width:720px;margin:0 auto;background:#fff;padding:24px;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.06)}
+    img{max-width:100%;margin-top:12px;border-radius:8px}
+    button{padding:10px;background:#007bff;color:white;border:none;border-radius:8px;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Remove Background</h2>
+    <input id="file" type="file" accept="image/*"><br><br>
+    <button id="start">Remove</button>
+    <p id="status"></p>
+    <img id="orig" alt="">
+    <img id="out" alt="">
+  </div>
+
+<script>
+  const startBtn = document.getElementById('start');
+  const fileEl = document.getElementById('file');
+  const status = document.getElementById('status');
+  const orig = document.getElementById('orig');
+  const out = document.getElementById('out');
+
+  startBtn.addEventListener('click', async () => {
+    const f = fileEl.files[0];
+    if (!f) return alert('Select an image');
+    orig.src = URL.createObjectURL(f);
+    status.textContent = 'Processing...';
+    const form = new FormData();
+    form.append('image_file', f);
+    form.append('size', 'auto');
+
+    try {
+      const res = await fetch('https://YOUR-VERCEL-URL.vercel.app/api/remove-bg', {
+        method: 'POST',
+        body: form
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      out.src = URL.createObjectURL(blob);
+      status.textContent = 'Done ✅';
+    } catch (err) {
+      status.textContent = 'Error: ' + err.message;
+    }
+  });
+</script>
+</body>
+</html>
