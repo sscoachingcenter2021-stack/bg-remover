@@ -33,11 +33,11 @@ if (!filePath) return res.status(400).json({ error: "No image uploaded" });
 
     // Read file as Buffer
 const buffer = fs.readFileSync(filePath);
-fd.append("image_file_b64", buffer.toString("base64"));
 
-    // Send to remove.bg
-    const fd = new FormData();
-    fd.append("image_file", buffer, { filename: "image.png" });
+// Send to remove.bg
+const fd = new FormData();
+fd.append("image_file", buffer, { filename: "image.png" });
+fd.append("image_file_b64", buffer.toString("base64"));
     fd.append("size", "auto");
 
     const r = await fetch("https://api.remove.bg/v1.0/removebg", {
