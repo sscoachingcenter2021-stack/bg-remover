@@ -4,6 +4,7 @@ import FormData from "form-data";
 
 export const config = { api: { bodyParser: false } };
 
+// Helper to parse multipart form
 const parseForm = (req) =>
   new Promise((resolve, reject) => {
     const form = new IncomingForm({ keepExtensions: true });
@@ -14,31 +15,28 @@ const parseForm = (req) =>
   });
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST")
+    return res.status(405).json({ error: "Method not allowed" });
 
   try {
     const { files } = await parseForm(req);
     console.log("FILES:", files);
 
-    // Get uploaded file
+    // Get uploaded file safely
     const fileObj = files.image_file;
-let filePath;
-
-if (Array.isArray(fileObj)) filePath = fileObj[0]?.filepath;
-else if (fileObj) filePath = fileObj.filepath;
-
-if (!filePath) return res.status(400).json({ error: "No image uploaded" });
+    const filePath = Array.isArray(fileObj)
+      ? fileObj[0]?.filepath
+      : fileObj?.filepath;
 
     if (!filePath) return res.status(400).json({ error: "No image uploaded" });
 
-    // Read file as Buffer
-const buffer = fs.readFileSync(filePath);
+    // Read file as buffer
+    const buffer = fs.readFileSync(filePath);
 
-// Send to remove.bg
-const fd = new FormData();
-fd.append("image_file", buffer, { filename: "image.png" });
-fd.append("image_file_b64", buffer.toString("base64"));
-    fd.append("size", "auto");
+    // Send to remove.bg using FormData
+    const fd = new FormData();
+    fd.append("image_file", buffer, { filename: "image.png" });
+    fd.append("size", "auto"); // do NOT include image_file_b64 here
 
     const r = await fetch("https://api.remove.bg/v1.0/removebg", {
       method: "POST",
