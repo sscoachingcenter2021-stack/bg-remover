@@ -1,11 +1,11 @@
 // api/remove-bg.js
-import formidable from "formidable";
+import { IncomingForm } from "formidable";
 import fs from "fs";
 import FormData from "form-data";
 
 export const config = {
   api: {
-    bodyParser: false, // disable Next.js default parser
+    bodyParser: false, // disable Next.js body parsing
   },
 };
 
@@ -15,8 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Parse multipart form with formidable
-    const form = new formidable.IncomingForm();
+    const form = new IncomingForm();
     form.keepExtensions = true;
 
     form.parse(req, async (err, fields, files) => {
@@ -25,12 +24,11 @@ export default async function handler(req, res) {
       const file = files.image_file;
       if (!file) return res.status(400).json({ error: "No image uploaded" });
 
-      // Node FormData to send to Remove.bg
+      // Node FormData for Remove.bg
       const fd = new FormData();
       fd.append("image_file", fs.createReadStream(file.filepath));
       fd.append("size", "auto");
 
-      // Send request to Remove.bg API
       const r = await fetch("https://api.remove.bg/v1.0/removebg", {
         method: "POST",
         headers: {

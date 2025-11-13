@@ -69,12 +69,10 @@
       startBtn.disabled = true;
 
       try {
-        // Create browser FormData (native)
         const form = new FormData();
         form.append('image_file', f);
         form.append('size', 'auto');
 
-        // Send to your own Vercel API route
         const res = await fetch('/api/remove-bg', {
           method: 'POST',
           body: form
