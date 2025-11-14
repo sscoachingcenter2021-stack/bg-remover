@@ -1,55 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Background Remover</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<h2>Select an image:</h2>
-<label for="fileInput">Choose an image</label>
-<input type="file" id="fileInput">
-<button id="uploadBtn">Remove Background</button>
+  <h2>Select an image:</h2>
+  <label for="fileInput">Choose an image</label>
+  <input type="file" id="fileInput">
+  <button id="uploadBtn">Remove Background</button>
 
-<br><br>
-<img id="result" style="max-width: 400px; display:none;">
+  <br><br>
+  <img id="result" class="result-image" style="display:none;">
 
-<script>
-document.getElementById("uploadBtn").addEventListener("click", async () => {
-  const file = document.getElementById("fileInput").files[0];
-  if (!file) {
-    alert("Please select a file");
-    return;
-  }
+  <script>
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) {
+        alert("Please select a file");
+        return;
+      }
 
-  console.log("File selected:", file);
+      console.log("File selected:", file);
 
-  const formData = new FormData();
-  formData.append("image", file);
+      const formData = new FormData();
+      formData.append("image", file);
 
-  try {
-    console.log("Sending request to backend...");
+      try {
+        console.log("Sending request to backend...");
 
-    const response = await fetch("/api/remove-bg", {
-      method: "POST",
-      body: formData
+        const response = await fetch("/api/remove-bg", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          console.error(await response.text());
+          alert("Server error");
+          return;
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        document.getElementById("result").src = url;
+        document.getElementById("result").style.display = "block";
+
+      } catch (err) {
+        console.error("Frontend error:", err);
+      }
     });
-
-    if (!response.ok) {
-      console.error(await response.text());
-      alert("Server error");
-      return;
-    }
-
-    const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    document.getElementById("result").src = url;
-    document.getElementById("result").style.display = "block";
-
-  } catch (err) {
-    console.error("Frontend error:", err);
-  }
-});
-</script>
+  </script>
 
 </body>
 </html>
