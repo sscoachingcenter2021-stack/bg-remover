@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/*.js": {
+    "api/remove-bg.js": {
       "runtime": "nodejs18.x"
     }
   }
