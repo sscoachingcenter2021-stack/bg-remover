@@ -1,8 +1,8 @@
-        {
-          "version": 2,
-          "functions": {
-            "api/**/*.js": {
-              "runtime": "vercel/node@20.x"
-            }
-          }
-        }
+{
+  "version": 2,
+  "functions": {
+    "api/remove-bg.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
