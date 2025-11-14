@@ -1,4 +1,60 @@
-<!doctype html>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Background Remover</title>
+</head>
+<body>
+
+<h2>Select an image:</h2>
+<label for="fileInput">Choose an image</label>
+<input type="file" id="fileInput">
+<button id="uploadBtn">Remove Background</button>
+
+<br><br>
+<img id="result" style="max-width: 400px; display:none;">
+
+<script>
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) {
+    alert("Please select a file");
+    return;
+  }
+
+  console.log("File selected:", file);
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    console.log("Sending request to backend...");
+
+    const response = await fetch("/api/remove-bg", {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      console.error(await response.text());
+      alert("Server error");
+      return;
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    document.getElementById("result").src = url;
+    document.getElementById("result").style.display = "block";
+
+  } catch (err) {
+    console.error("Frontend error:", err);
+  }
+});
+</script>
+
+</body>
+</html>
+
+<!-- <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -98,4 +154,4 @@
     });
   </script>
 </body>
-</html>
+</html> -->
