@@ -1,9 +1,7 @@
 {
   "functions": {
     "api/remove-bg.js": {
-      "runtime": "nodejs18",
-      "memory": 2048,
-      "maxDuration": 30
+      "runtime": "nodejs18.x"
     }
   }
 }
